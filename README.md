@@ -76,7 +76,7 @@ Create a `.env` file in the root directory:
 
 ```env
 PORT=5000
-MONGO_URI=mongodb://localhost:27017/authflow
+MONGO_URI=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/<dbname>?appName=<AppName
 ACCESS_TOKEN_SECRET=your_access_token_secret
 REFRESH_TOKEN_SECRET=your_refresh_token_secret
 ACCESS_TOKEN_EXPIRES=15m
