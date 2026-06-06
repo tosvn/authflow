@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AuthFlow</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <div class="container">
+
+    <!-- Header -->
+    <div class="header">
+      <h1>🔐 AuthFlow</h1>
+      <p>JWT Authentication System</p>
+    </div>
+
+    <!-- Auth Forms -->
+    <div class="card" id="auth-section">
+
+      <!-- Tabs -->
+      <div class="tabs">
+        <button class="tab active" onclick="switchTab('login', event)">Login</button>
+        <button class="tab" onclick="switchTab('register', event)">Register</button>
+      </div>
+
+      <!-- Login Form -->
+      <div id="login-form">
+        <h2>Welcome back</h2>
+        <input type="email" id="login-email" placeholder="Email" />
+        <input type="password" id="login-password" placeholder="Password" />
+        <button class="btn" onclick="login()">Login</button>
+      </div>
+
+      <!-- Register Form -->
+      <div id="register-form" class="hidden">
+        <h2>Create account</h2>
+        <input type="text" id="reg-username" placeholder="Username" />
+        <input type="email" id="reg-email" placeholder="Email" />
+        <input type="password" id="reg-password" placeholder="Password" />
+        <button class="btn" onclick="register()">Register</button>
+      </div>
+
+      <div id="auth-message" class="message hidden"></div>
+    </div>
+
+    <!-- Dashboard (shown after login) -->
+    <div class="card hidden" id="dashboard">
+      <h2>Dashboard</h2>
+      <div class="user-info">
+        <p>👤 <span id="dash-username"></span></p>
+        <p>📧 <span id="dash-email"></span></p>
+      </div>
+      <div class="token-box">
+        <p class="label">Access Token</p>
+        <p id="dash-token"></p>
+      </div>
+      <div class="actions">
+        <button class="btn" onclick="getMe()">Get My Profile</button>
+        <button class="btn btn-danger" onclick="logout()">Logout</button>
+      </div>
+      <div id="dash-message" class="message hidden"></div>
+    </div>
+
+  </div>
+
+  <script>
+    let accessToken = sessionStorage.getItem('accessToken') || null;
+
+    function switchTab(tab, e) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      e.target.classList.add('active');
+      document.getElementById('login-form').classList.toggle('hidden', tab !== 'login');
+      document.getElementById('register-form').classList.toggle('hidden', tab !== 'register');
+      hideMessage('auth-message');
+    }
+
+    function showMessage(id, text, type) {
+      const el = document.getElementById(id);
+      el.textContent = text;
+      el.className = `message ${type}`;
+    }
+
+    function hideMessage(id) {
+      document.getElementById(id).className = 'message hidden';
+    }
+
+    async function register() {
+      const username = document.getElementById('reg-username').value;
+      const email = document.getElementById('reg-email').value;
+      const password = document.getElementById('reg-password').value;
+
+      try {
+        const res = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ username, email, password })
+        });
+        const data = await res.json();
+
+        if (!res.ok) return showMessage('auth-message', data.message, 'error');
+
+        accessToken = data.accessToken;
+        showDashboard(data.user);
+      } catch (err) {
+        showMessage('auth-message', 'Something went wrong', 'error');
+      }
+    }
+
+    async function login() {
+      const email = document.getElementById('login-email').value;
+      const password = document.getElementById('login-password').value;
+
+      try {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ email, password })
+        });
+        const data = await res.json();
+
+        if (!res.ok) return showMessage('auth-message', data.message, 'error');
+
+        accessToken = data.accessToken;
+        showDashboard(data.user);
+      } catch (err) {
+        showMessage('auth-message', 'Something went wrong', 'error');
+      }
+    }
+
+   async function getMe() {
+  try {
+    console.log('Token being sent:', accessToken);
+    const res = await fetch('/api/auth/me', {
+          headers: { 'Authorization': `Bearer ${accessToken}` },
+          credentials: 'include'
+        });
+        const data = await res.json();
+
+        if (!res.ok) return showMessage('dash-message', data.message, 'error');
+        showMessage('dash-message', `Profile fetched! ID: ${data.user._id}`, 'success');
+      } catch (err) {
+        showMessage('dash-message', 'Something went wrong', 'error');
+      }
+    }
+
+    async function logout() {
+      try {
+        await fetch('/api/auth/logout', {
+          method: 'POST',
+          credentials: 'include'
+        });
+      } finally {
+        accessToken = null;
+        sessionStorage.removeItem('accessToken');
+        document.getElementById('dashboard').classList.add('hidden');
+        document.getElementById('auth-section').classList.remove('hidden');
+        hideMessage('dash-message');
+      }
+    }
+
+    function showDashboard(user) {
+      sessionStorage.setItem('accessToken', accessToken);
+      document.getElementById('auth-section').classList.add('hidden');
+      document.getElementById('dashboard').classList.remove('hidden');
+      document.getElementById('dash-username').textContent = user.username;
+      document.getElementById('dash-email').textContent = user.email;
+      document.getElementById('dash-token').textContent = accessToken;
+    }
+  </script>
+
+</body>
+</html>
