@@ -25,8 +25,8 @@ exports.register = async (req, res) => {
         const {username, email, password} = req.body
 
         // Check if user already exists
-        const extinguisher = await User.findOne({$or: [{email}, {username}]})
-        if (extinguisher) {
+        const existingUser = await User.findOne({$or: [{email}, {username}]})
+        if (existingUser) {
             return res.status(400).json({message: 'Username or email already taken'})
         }
 
