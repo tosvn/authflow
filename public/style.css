@@ -70,7 +70,7 @@ body {
 
 .tab.active {
   background: #a78bfa;
-  color: #fff;
+  color: #000;
 }
 
 /* Forms */
@@ -114,6 +114,11 @@ input::placeholder {
   cursor: pointer;
   transition: background 0.2s;
   margin-top: 4px;
+}
+
+.btn:focus {
+  color: #000;
+  outline: none;
 }
 
 .btn:hover {
